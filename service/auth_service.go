@@ -59,6 +59,15 @@ func (s *AuthService) RegisterUser(pr *model.RegisterUser) error {
 	return nil
 }
 
+func (s *AuthService) GetAllUsers() ([]model.User, error) {
+	users, err := s.authRepository.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *AuthService) LoginUser(l *model.Login) (string, error) {
 	user, err := s.authRepository.GetUser(l.Username)
 	if err != nil {
@@ -66,10 +75,10 @@ func (s *AuthService) LoginUser(l *model.Login) (string, error) {
 		return "", errors.New("Wrong username or password!")
 	}
 
-	if !user.Enabled {
-		log.Println("Wrong username or password!2")
-		return "", errors.New("Wrong username or password!")
-	}
+	// if !user.Enabled {
+	// 	log.Println("Wrong username or password!2")
+	// 	return "", errors.New("Wrong username or password!")
+	// }
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(l.Password)); err != nil {
 		log.Println("Wrong username or password!3")

@@ -14,6 +14,28 @@ type ConsulAuthRepository struct {
 	cli *api.Client
 }
 
+func (r *ConsulAuthRepository) GetAllUsers() ([]model.User, error) {
+	kv := r.cli.KV()
+
+	// Retrieve all keys with the prefix "user/"
+	pairs, _, err := kv.List("user/", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []model.User
+	for _, pair := range pairs {
+		var user model.User
+		err := json.Unmarshal(pair.Value, &user)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func NewConsulAuthRepository() (*ConsulAuthRepository, error) {
 	db := os.Getenv("DB")
 	dbport := os.Getenv("DBPORT")

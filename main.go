@@ -36,6 +36,7 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
+	router.HandleFunc("/users/", authController.GetAllUsers).Methods("GET")
 	router.HandleFunc("/register/", authController.RegisterUser).Methods("POST")
 	router.HandleFunc("/login/", authController.LoginUser).Methods("POST")
 	router.HandleFunc("/verify/{verificationId}/", authController.VerifyRegistration).Methods("PUT")

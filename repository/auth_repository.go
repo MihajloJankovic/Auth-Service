@@ -9,4 +9,5 @@ type AuthRepository interface {
 	SaveVerification(uuid string, username string) error
 	GetVerification(uuid string) (string, error)
 	DeleteVerification(uuid string) error
+	GetAllUsers() ([]model.User, error)
 }

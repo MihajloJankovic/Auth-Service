@@ -20,17 +20,36 @@ func NewAuthController(authService *service.AuthService) *AuthController {
 	}
 }
 
+func (c *AuthController) GetAllUsers(w http.ResponseWriter, req *http.Request) {
+	users, err := c.authService.GetAllUsers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = json.EncodeJson(w, users)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (c *AuthController) RegisterUser(w http.ResponseWriter, req *http.Request) {
 	pr, err := json.DecodeJson[model.RegisterUser](req.Body)
 	log.Println("Registracija " + pr.Username)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = c.authService.RegisterUser(&pr)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User registered successfully"))
 }
 
 func (c *AuthController) LoginUser(w http.ResponseWriter, req *http.Request) {

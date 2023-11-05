@@ -26,6 +26,7 @@ services:
     depends_on:
       - consul
       - tracing
+      - client
     environment:
       - DB=consul
       - DBPORT=8500
@@ -35,5 +36,11 @@ services:
       - JAEGER_SAMPLER_MANAGER_HOST_PORT=jaeger:5778
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=10
+  client:
+    build: .
+    restart: always
+    ports:
+      - "9042:9042"
+
 volumes:
   consul:

@@ -32,7 +32,7 @@ WORKDIR /root/
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
 
-EXPOSE 9091
+EXPOSE 9095
 
 # Command to run the executable
 CMD ["./main"]

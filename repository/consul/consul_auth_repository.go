@@ -37,8 +37,8 @@ func (r *ConsulAuthRepository) GetAllUsers() ([]model.User, error) {
 }
 
 func NewConsulAuthRepository() (*ConsulAuthRepository, error) {
-	db := os.Getenv("DB")
-	dbport := os.Getenv("DBPORT")
+	db := os.Getenv("consul")
+	dbport := os.Getenv("8500")
 
 	config := api.DefaultConfig()
 	config.Address = fmt.Sprintf("%s:%s", db, dbport)

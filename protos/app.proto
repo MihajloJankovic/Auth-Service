@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option go_package = "../main";
-service accommodation {
+service auth {
   rpc Register(AuthRequest) returns (AuthResponse);
   rpc Login(AuthRequest) returns (Empty);
   rpc GetAuth(AuthGet) returns (AuthResponse);

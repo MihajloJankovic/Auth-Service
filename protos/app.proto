@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "../main";
+service accommodation {
+  rpc Register(AuthRequest) returns (AuthResponse);
+  rpc Login(AuthRequest) returns (Empty);
+  rpc GetAuth(AuthGet) returns (AuthResponse);
+}
+
+message  AuthRequest {
+  string username = 1;
+  string password = 2;
+}
+message AuthResponse {
+  string username = 1;
+}
+message AuthGet {
+  string username = 1;
+}
+message  Empty {
+}

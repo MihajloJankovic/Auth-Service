@@ -1,29 +1,21 @@
 syntax = "proto3";
 
 option go_package = "../main";
-
-service profile {
-  rpc RegisterUser(UserRegistrationRequest) returns (UserResponse);
-  rpc LoginUser(LoginUserRequest) returns (UserResponse);
-  rpc VerifyRegistration(VerifyRegistrationRequest) returns (UserResponse);
+service accommodation {
+  rpc Register(AuthRequest) returns (AuthResponse);
+  rpc Login(AuthRequest) returns (Empty);
+  rpc GetAuth(AuthGet) returns (AuthResponse);
 }
 
-message UserRegistrationRequest {
-    string username = 1;
-    string password = 2;
-    string USER_ROLE = 3;
-}
-
-message UserResponse {
-    string username = 1;
-}
-message VerifyRegistrationRequest {
-    string ticket_id = 1;
-}
-message  LoginUserRequest {
+message  AuthRequest {
   string username = 1;
   string password = 2;
 }
-
+message AuthResponse {
+  string username = 1;
+}
+message AuthGet {
+  string username = 1;
+}
 message  Empty {
 }

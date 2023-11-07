@@ -19,163 +19,163 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Profile_RegisterUser_FullMethodName       = "/profile/RegisterUser"
-	Profile_LoginUser_FullMethodName          = "/profile/LoginUser"
-	Profile_VerifyRegistration_FullMethodName = "/profile/VerifyRegistration"
+	Accommodation_Register_FullMethodName = "/accommodation/Register"
+	Accommodation_Login_FullMethodName    = "/accommodation/Login"
+	Accommodation_GetAuth_FullMethodName  = "/accommodation/GetAuth"
 )
 
-// ProfileClient is the client API for Profile service.
+// AccommodationClient is the client API for Accommodation service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ProfileClient interface {
-	RegisterUser(ctx context.Context, in *UserRegistrationRequest, opts ...grpc.CallOption) (*UserResponse, error)
-	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
-	VerifyRegistration(ctx context.Context, in *VerifyRegistrationRequest, opts ...grpc.CallOption) (*UserResponse, error)
+type AccommodationClient interface {
+	Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*Empty, error)
+	GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
-type profileClient struct {
+type accommodationClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewProfileClient(cc grpc.ClientConnInterface) ProfileClient {
-	return &profileClient{cc}
+func NewAccommodationClient(cc grpc.ClientConnInterface) AccommodationClient {
+	return &accommodationClient{cc}
 }
 
-func (c *profileClient) RegisterUser(ctx context.Context, in *UserRegistrationRequest, opts ...grpc.CallOption) (*UserResponse, error) {
-	out := new(UserResponse)
-	err := c.cc.Invoke(ctx, Profile_RegisterUser_FullMethodName, in, out, opts...)
+func (c *accommodationClient) Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, Accommodation_Register_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *profileClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
-	out := new(UserResponse)
-	err := c.cc.Invoke(ctx, Profile_LoginUser_FullMethodName, in, out, opts...)
+func (c *accommodationClient) Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Accommodation_Login_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *profileClient) VerifyRegistration(ctx context.Context, in *VerifyRegistrationRequest, opts ...grpc.CallOption) (*UserResponse, error) {
-	out := new(UserResponse)
-	err := c.cc.Invoke(ctx, Profile_VerifyRegistration_FullMethodName, in, out, opts...)
+func (c *accommodationClient) GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, Accommodation_GetAuth_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ProfileServer is the server API for Profile service.
-// All implementations must embed UnimplementedProfileServer
+// AccommodationServer is the server API for Accommodation service.
+// All implementations must embed UnimplementedAccommodationServer
 // for forward compatibility
-type ProfileServer interface {
-	RegisterUser(context.Context, *UserRegistrationRequest) (*UserResponse, error)
-	LoginUser(context.Context, *LoginUserRequest) (*UserResponse, error)
-	VerifyRegistration(context.Context, *VerifyRegistrationRequest) (*UserResponse, error)
-	mustEmbedUnimplementedProfileServer()
+type AccommodationServer interface {
+	Register(context.Context, *AuthRequest) (*AuthResponse, error)
+	Login(context.Context, *AuthRequest) (*Empty, error)
+	GetAuth(context.Context, *AuthGet) (*AuthResponse, error)
+	mustEmbedUnimplementedAccommodationServer()
 }
 
-// UnimplementedProfileServer must be embedded to have forward compatible implementations.
-type UnimplementedProfileServer struct {
+// UnimplementedAccommodationServer must be embedded to have forward compatible implementations.
+type UnimplementedAccommodationServer struct {
 }
 
-func (UnimplementedProfileServer) RegisterUser(context.Context, *UserRegistrationRequest) (*UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
+func (UnimplementedAccommodationServer) Register(context.Context, *AuthRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedProfileServer) LoginUser(context.Context, *LoginUserRequest) (*UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method LoginUser not implemented")
+func (UnimplementedAccommodationServer) Login(context.Context, *AuthRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedProfileServer) VerifyRegistration(context.Context, *VerifyRegistrationRequest) (*UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method VerifyRegistration not implemented")
+func (UnimplementedAccommodationServer) GetAuth(context.Context, *AuthGet) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAuth not implemented")
 }
-func (UnimplementedProfileServer) mustEmbedUnimplementedProfileServer() {}
+func (UnimplementedAccommodationServer) mustEmbedUnimplementedAccommodationServer() {}
 
-// UnsafeProfileServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ProfileServer will
+// UnsafeAccommodationServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AccommodationServer will
 // result in compilation errors.
-type UnsafeProfileServer interface {
-	mustEmbedUnimplementedProfileServer()
+type UnsafeAccommodationServer interface {
+	mustEmbedUnimplementedAccommodationServer()
 }
 
-func RegisterProfileServer(s grpc.ServiceRegistrar, srv ProfileServer) {
-	s.RegisterService(&Profile_ServiceDesc, srv)
+func RegisterAccommodationServer(s grpc.ServiceRegistrar, srv AccommodationServer) {
+	s.RegisterService(&Accommodation_ServiceDesc, srv)
 }
 
-func _Profile_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserRegistrationRequest)
+func _Accommodation_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServer).RegisterUser(ctx, in)
+		return srv.(AccommodationServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Profile_RegisterUser_FullMethodName,
+		FullMethod: Accommodation_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServer).RegisterUser(ctx, req.(*UserRegistrationRequest))
+		return srv.(AccommodationServer).Register(ctx, req.(*AuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Profile_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginUserRequest)
+func _Accommodation_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServer).LoginUser(ctx, in)
+		return srv.(AccommodationServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Profile_LoginUser_FullMethodName,
+		FullMethod: Accommodation_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServer).LoginUser(ctx, req.(*LoginUserRequest))
+		return srv.(AccommodationServer).Login(ctx, req.(*AuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Profile_VerifyRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyRegistrationRequest)
+func _Accommodation_GetAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthGet)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServer).VerifyRegistration(ctx, in)
+		return srv.(AccommodationServer).GetAuth(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Profile_VerifyRegistration_FullMethodName,
+		FullMethod: Accommodation_GetAuth_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServer).VerifyRegistration(ctx, req.(*VerifyRegistrationRequest))
+		return srv.(AccommodationServer).GetAuth(ctx, req.(*AuthGet))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Profile_ServiceDesc is the grpc.ServiceDesc for Profile service.
+// Accommodation_ServiceDesc is the grpc.ServiceDesc for Accommodation service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Profile_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "profile",
-	HandlerType: (*ProfileServer)(nil),
+var Accommodation_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "accommodation",
+	HandlerType: (*AccommodationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RegisterUser",
-			Handler:    _Profile_RegisterUser_Handler,
+			MethodName: "Register",
+			Handler:    _Accommodation_Register_Handler,
 		},
 		{
-			MethodName: "LoginUser",
-			Handler:    _Profile_LoginUser_Handler,
+			MethodName: "Login",
+			Handler:    _Accommodation_Login_Handler,
 		},
 		{
-			MethodName: "VerifyRegistration",
-			Handler:    _Profile_VerifyRegistration_Handler,
+			MethodName: "GetAuth",
+			Handler:    _Accommodation_GetAuth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

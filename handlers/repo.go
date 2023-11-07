@@ -68,6 +68,22 @@ func (pr *AuthRepo) Ping() {
 	fmt.Println(databases)
 }
 
+func (pr *AuthRepo) GetByUsername(usernamea string) (*protos.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"username": usernamea}).Decode(&auth)
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+
+	return &auth, nil
+}
+
 func (pr *AuthRepo) Create(auth *protos.AuthResponse) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -87,12 +103,10 @@ func (pr *AuthRepo) Update(auth *protos.AuthResponse) error {
 	defer cancel()
 	authCollection := pr.getCollection()
 
-	filter := bson.M{"email": auth.GetEmail()}
+	filter := bson.M{"username": auth.GetUsername()}
 	update := bson.M{"$set": bson.M{
-		"gender":    auth.GetGender(),
-		"firstname": auth.GetFirstname(),
-		"lastname":  auth.GetLastname(),
-		"birthday":  auth.GetBirthday(),
+		"username": auth.GetUsername(),
+		"password": auth.GetPassword(),
 	}}
 	result, err := authCollection.UpdateOne(ctx, filter, update)
 	pr.logger.Printf("Documents matched: %v\n", result.MatchedCount)

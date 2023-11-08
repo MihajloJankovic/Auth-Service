@@ -89,16 +89,16 @@ func (pr *AuthRepo) GetById(emaila string) (*protos.AuthResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	profileCollection := pr.getCollection()
-	var profile protos.AuthResponse
+	authCollection := pr.getCollection()
+	var auth protos.AuthResponse
 
-	err := profileCollection.FindOne(ctx, bson.M{"email": emaila}).Decode(&profile)
+	err := authCollection.FindOne(ctx, bson.M{"email": emaila}).Decode(&auth)
 	if err != nil {
 		pr.logger.Println(err)
 		return nil, err
 	}
 
-	return &profile, nil
+	return &auth, nil
 }
 
 func (pr *AuthRepo) Create(auth *protos.AuthResponse) error {
@@ -148,17 +148,17 @@ func (pr *AuthRepo) Login(email, password string) (bool, string, error) {
 
 	authCollection := pr.getCollection()
 
-	var profile protos.AuthResponse
+	var auth protos.AuthResponse
 
-	err := authCollection.FindOne(ctx, bson.M{"email": email, "password": password}).Decode(&profile)
+	err := authCollection.FindOne(ctx, bson.M{"email": email, "password": password}).Decode(&auth)
 	if err != nil {
 		pr.logger.Println(err)
 		return false, "", err
 	}
 
-	if profile.Email == "" {
+	if auth.Email == "" {
 		return false, "", nil
 	}
 
-	return true, profile.Email, nil
+	return true, auth.Email, nil
 }

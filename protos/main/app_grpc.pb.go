@@ -4,7 +4,7 @@
 // - protoc             v4.25.0
 // source: app.proto
 
-package main
+package authproto
 
 import (
 	context "context"
@@ -28,7 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
-	Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*Empty, error)
+	Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthEmpty, error)
 	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthGet, error)
 	GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthResponse, error)
 }
@@ -41,8 +41,8 @@ func NewAuthClient(cc grpc.ClientConnInterface) AuthClient {
 	return &authClient{cc}
 }
 
-func (c *authClient) Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *authClient) Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthEmpty, error) {
+	out := new(AuthEmpty)
 	err := c.cc.Invoke(ctx, Auth_Register_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (c *authClient) GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.Call
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
 type AuthServer interface {
-	Register(context.Context, *AuthRequest) (*Empty, error)
+	Register(context.Context, *AuthRequest) (*AuthEmpty, error)
 	Login(context.Context, *AuthRequest) (*AuthGet, error)
 	GetAuth(context.Context, *AuthGet) (*AuthResponse, error)
 	mustEmbedUnimplementedAuthServer()
@@ -82,7 +82,7 @@ type AuthServer interface {
 type UnimplementedAuthServer struct {
 }
 
-func (UnimplementedAuthServer) Register(context.Context, *AuthRequest) (*Empty, error) {
+func (UnimplementedAuthServer) Register(context.Context, *AuthRequest) (*AuthEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedAuthServer) Login(context.Context, *AuthRequest) (*AuthGet, error) {

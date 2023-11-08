@@ -19,14 +19,6 @@ func NewServer(l *log.Logger, r *AuthRepo) *myAuthServer {
 	return &myAuthServer{*new(protos.UnimplementedAuthServer), l, r}
 }
 
-// OVE METODE MORAJU BIT IMPLEMENTIRANE BAS OVAKO JER SI IH TAKO U APP PROTO . MORAS PROMENITI
-//U APP PROTO AKO ZELIS DA KORISTIS OVE METODE , JER NISU U INTERFEJUS KOJI IMA KLIJENT .
-//DODAJ LOGIN OVDE KAO METODU I OVE KOJE IMAS OVDE A NEMAS U INTERFEJSU MORAS DODATI I APP.PROTO
-
-//Register(context.Context, *AuthRequest) (*Empty, error)
-//Login(context.Context, *AuthRequest) (*Empty, error)
-//GetAuth(context.Context, *AuthGet) (*AuthResponse, error)
-
 // add edit,create user ,delete user
 func (s myAuthServer) GetAuth(ctx context.Context, in *protos.AuthGet) (*protos.AuthResponse, error) {
 
@@ -38,7 +30,7 @@ func (s myAuthServer) GetAuth(ctx context.Context, in *protos.AuthGet) (*protos.
 	return out, nil
 }
 
-func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.Empty, error) {
+func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
 
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
@@ -49,7 +41,7 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 		s.logger.Println(err)
 		return nil, err
 	}
-	return new(protos.Empty), nil
+	return new(protos.AuthEmpty), nil
 }
 func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*protos.AuthGet, error) {
 	success, email, err := s.repo.Login(in.GetEmail(), in.GetPassword())

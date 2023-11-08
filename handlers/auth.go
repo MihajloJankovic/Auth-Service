@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
@@ -29,7 +30,7 @@ func NewServer(l *log.Logger, r *AuthRepo) *myAuthServer {
 // add edit,create user ,delete user
 func (s myAuthServer) GetAuth(ctx context.Context, in *protos.AuthGet) (*protos.AuthResponse, error) {
 
-	out, err := s.repo.GetByUsername(in.GetUsername())
+	out, err := s.repo.GetById(in.GetEmail())
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err
@@ -40,7 +41,7 @@ func (s myAuthServer) GetAuth(ctx context.Context, in *protos.AuthGet) (*protos.
 func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.Empty, error) {
 
 	out := new(protos.AuthResponse)
-	out.Username = in.GetUsername()
+	out.Email = in.GetEmail()
 	out.Password = in.GetPassword()
 
 	err := s.repo.Create(out)
@@ -50,11 +51,14 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 	}
 	return new(protos.Empty), nil
 }
-func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*protos.Empty, error) {
-	//err := s.repo.Update(in)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//return new(protos.Empty), nil
-	return nil, nil
+func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*protos.AuthGet, error) {
+	success, email, err := s.repo.Login(in.GetEmail(), in.GetPassword())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+	if !success {
+		return nil, errors.New("login failed")
+	}
+	return &protos.AuthGet{Email: email}, nil
 }

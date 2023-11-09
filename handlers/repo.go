@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"time"
 
@@ -16,6 +18,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 type AuthRepo struct {
 	cli    *mongo.Client
@@ -122,8 +126,10 @@ func (pr *AuthRepo) Update(auth *protos.AuthResponse) error {
 
 	filter := bson.M{"email": auth.GetEmail()}
 	update := bson.M{"$set": bson.M{
-		"email":    auth.GetEmail(),
-		"password": auth.GetPassword(),
+		"email":     auth.GetEmail(),
+		"password":  auth.GetPassword(),
+		"ticket":    auth.GetTicket(),
+		"activated": auth.GetActivated(),
 	}}
 	result, err := authCollection.UpdateOne(ctx, filter, update)
 	pr.logger.Printf("Documents matched: %v\n", result.MatchedCount)
@@ -156,9 +162,61 @@ func (pr *AuthRepo) Login(email, password string) (bool, string, error) {
 		return false, "", err
 	}
 
-	if auth.Email == "" {
+	if auth.Email == "" || !auth.Activated {
 		return false, "", nil
 	}
 
 	return true, auth.Email, nil
+}
+func (pr *AuthRepo) GetTicketByEmail(email string) (*protos.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"email": email}).Decode(&auth)
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+
+	return &auth, nil
+}
+func (pr *AuthRepo) Activate(email, ticket string) (*protos.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	filter := bson.M{"email": email, "ticket": ticket}
+	update := bson.M{"$set": bson.M{"activated": true}}
+
+	result, err := authCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+
+	if result.ModifiedCount == 0 {
+		return nil, errors.New("activation failed")
+	}
+
+	activatedAuth, err := pr.GetById(email)
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+
+	return activatedAuth, nil
+}
+
+func RandomString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

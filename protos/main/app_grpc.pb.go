@@ -4,7 +4,7 @@
 // - protoc             v4.25.0
 // source: app.proto
 
-package authproto
+package main
 
 import (
 	context "context"
@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Auth_Register_FullMethodName = "/auth/Register"
-	Auth_Login_FullMethodName    = "/auth/Login"
-	Auth_GetAuth_FullMethodName  = "/auth/GetAuth"
+	Auth_Register_FullMethodName  = "/auth/Register"
+	Auth_Login_FullMethodName     = "/auth/Login"
+	Auth_GetTicket_FullMethodName = "/auth/GetTicket"
+	Auth_Activate_FullMethodName  = "/auth/Activate"
 )
 
 // AuthClient is the client API for Auth service.
@@ -30,7 +31,8 @@ const (
 type AuthClient interface {
 	Register(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthEmpty, error)
 	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthGet, error)
-	GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthResponse, error)
+	GetTicket(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthTicket, error)
+	Activate(ctx context.Context, in *ActivateRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type authClient struct {
@@ -59,9 +61,18 @@ func (c *authClient) Login(ctx context.Context, in *AuthRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *authClient) GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthResponse, error) {
+func (c *authClient) GetTicket(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthTicket, error) {
+	out := new(AuthTicket)
+	err := c.cc.Invoke(ctx, Auth_GetTicket_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) Activate(ctx context.Context, in *ActivateRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
 	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, Auth_GetAuth_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auth_Activate_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +85,8 @@ func (c *authClient) GetAuth(ctx context.Context, in *AuthGet, opts ...grpc.Call
 type AuthServer interface {
 	Register(context.Context, *AuthRequest) (*AuthEmpty, error)
 	Login(context.Context, *AuthRequest) (*AuthGet, error)
-	GetAuth(context.Context, *AuthGet) (*AuthResponse, error)
+	GetTicket(context.Context, *AuthGet) (*AuthTicket, error)
+	Activate(context.Context, *ActivateRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -88,8 +100,11 @@ func (UnimplementedAuthServer) Register(context.Context, *AuthRequest) (*AuthEmp
 func (UnimplementedAuthServer) Login(context.Context, *AuthRequest) (*AuthGet, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthServer) GetAuth(context.Context, *AuthGet) (*AuthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAuth not implemented")
+func (UnimplementedAuthServer) GetTicket(context.Context, *AuthGet) (*AuthTicket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTicket not implemented")
+}
+func (UnimplementedAuthServer) Activate(context.Context, *ActivateRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Activate not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -140,20 +155,38 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auth_GetAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auth_GetTicket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AuthGet)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServer).GetAuth(ctx, in)
+		return srv.(AuthServer).GetTicket(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Auth_GetAuth_FullMethodName,
+		FullMethod: Auth_GetTicket_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServer).GetAuth(ctx, req.(*AuthGet))
+		return srv.(AuthServer).GetTicket(ctx, req.(*AuthGet))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_Activate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ActivateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).Activate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_Activate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).Activate(ctx, req.(*ActivateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -174,8 +207,12 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Auth_Login_Handler,
 		},
 		{
-			MethodName: "GetAuth",
-			Handler:    _Auth_GetAuth_Handler,
+			MethodName: "GetTicket",
+			Handler:    _Auth_GetTicket_Handler,
+		},
+		{
+			MethodName: "Activate",
+			Handler:    _Auth_Activate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -35,6 +35,8 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
 	out.Password = in.GetPassword()
+	out.Ticket = RandomString(18)
+	out.Activated = false
 
 	err := s.repo.Create(out)
 	if err != nil {
@@ -53,4 +55,12 @@ func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*proto
 		return nil, errors.New("login failed")
 	}
 	return &protos.AuthGet{Email: email}, nil
+}
+func (s myAuthServer) GetTicket(ctx context.Context, in *protos.AuthGet) (*protos.AuthTicket, error) {
+	out, err := s.repo.GetTicketByEmail(in.GetEmail())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+	return &protos.AuthTicket{Ticket: out.Ticket}, nil
 }

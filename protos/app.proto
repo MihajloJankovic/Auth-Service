@@ -2,21 +2,21 @@ syntax = "proto3";
 
 option go_package = "../main";
 service auth {
-  rpc Register(AuthRequest) returns (Empty);
-  rpc Login(AuthRequest) returns (Empty);
+  rpc Register(AuthRequest) returns (AuthEmpty);
+  rpc Login(AuthRequest) returns (AuthGet);
   rpc GetAuth(AuthGet) returns (AuthResponse);
 }
 
+message AuthGet {
+  string email = 1;
+}
 message AuthRequest {
-  string username = 1;
+  string email = 1;
   string password = 2;
 }
 message AuthResponse {
-  string username = 1;
+  string email = 1;
   string password = 2;
 }
-message AuthGet {
-  string username = 1;
-}
-message  Empty {
+message AuthEmpty {
 }

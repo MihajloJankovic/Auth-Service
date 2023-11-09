@@ -67,15 +67,32 @@ func (pr *AuthRepo) Ping() {
 	}
 	fmt.Println(databases)
 }
+func (pr *AuthRepo) GetAll() (*[]protos.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-func (pr *AuthRepo) GetByUsername(usernamea string) (*protos.AuthResponse, error) {
+	authCollection := pr.getCollection()
+	var authsSlice []protos.AuthResponse
+
+	authCursor, err := authCollection.Find(ctx, bson.M{})
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+	if err = authCursor.All(ctx, &authsSlice); err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+	return &authsSlice, nil
+}
+func (pr *AuthRepo) GetById(emaila string) (*protos.AuthResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	authCollection := pr.getCollection()
 	var auth protos.AuthResponse
 
-	err := authCollection.FindOne(ctx, bson.M{"username": usernamea}).Decode(&auth)
+	err := authCollection.FindOne(ctx, bson.M{"email": emaila}).Decode(&auth)
 	if err != nil {
 		pr.logger.Println(err)
 		return nil, err
@@ -103,9 +120,9 @@ func (pr *AuthRepo) Update(auth *protos.AuthResponse) error {
 	defer cancel()
 	authCollection := pr.getCollection()
 
-	filter := bson.M{"username": auth.GetUsername()}
+	filter := bson.M{"email": auth.GetEmail()}
 	update := bson.M{"$set": bson.M{
-		"username": auth.GetUsername(),
+		"email":    auth.GetEmail(),
 		"password": auth.GetPassword(),
 	}}
 	result, err := authCollection.UpdateOne(ctx, filter, update)
@@ -123,4 +140,25 @@ func (pr *AuthRepo) getCollection() *mongo.Collection {
 	authDatabase := pr.cli.Database("mongoAuth")
 	authCollection := authDatabase.Collection("auths")
 	return authCollection
+}
+
+func (pr *AuthRepo) Login(email, password string) (bool, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"email": email, "password": password}).Decode(&auth)
+	if err != nil {
+		pr.logger.Println(err)
+		return false, "", err
+	}
+
+	if auth.Email == "" {
+		return false, "", nil
+	}
+
+	return true, auth.Email, nil
 }

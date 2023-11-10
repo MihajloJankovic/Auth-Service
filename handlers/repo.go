@@ -10,6 +10,7 @@ import (
 	"time"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
+	"gopkg.in/gomail.v2"
 
 	// NoSQL: module containing Mongo api client
 
@@ -211,7 +212,23 @@ func (pr *AuthRepo) Activate(email, ticket string) (*protos.AuthResponse, error)
 
 	return activatedAuth, nil
 }
+func sendActivationEmail(email, activationLink string) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", "goprojekat@gmail.com")
+	m.SetHeader("To", email)
+	m.SetHeader("Subject", "Account Activation")
+	m.SetBody("text/html", fmt.Sprintf("Click the following link to activate your account: <a href=\"%s\">Activate Account</a>", activationLink))
 
+	// Set up the SMTP dialer
+	d := gomail.NewDialer("smtp.gmail.com", 587, "goprojekat@gmail.com", "goprojekat123")
+
+	// Send the email
+	if err := d.DialAndSend(m); err != nil {
+		return err
+	}
+
+	return nil
+}
 func RandomString(length int) string {
 	rand.Seed(time.Now().UnixNano())
 	b := make([]byte, length)

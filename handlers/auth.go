@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
@@ -30,6 +31,14 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err
+	}
+
+	// Send activation link to the user via email
+	activationLink := fmt.Sprintf("http://localhost:9090/activate/%s/%s", out.Email, out.Ticket)
+
+	if err := sendActivationEmail(out.Email, activationLink); err != nil {
+		s.logger.Println("Failed to send activation email:", err)
+		// You can choose to return an error or handle it as appropriate for your application
 	}
 	return new(protos.AuthEmpty), nil
 }

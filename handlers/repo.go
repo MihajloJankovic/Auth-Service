@@ -220,7 +220,7 @@ func sendActivationEmail(email, activationLink string) error {
 	m.SetBody("text/html", fmt.Sprintf("Click the following link to activate your account: <a href=\"%s\">Activate Account</a>", activationLink))
 
 	// Set up the SMTP dialer
-	d := gomail.NewDialer("smtp.gmail.com", 587, "goprojekat@gmail.com", "goprojekat123")
+	d := gomail.NewDialer("smtp.gmail.com", 587, "stefan.milosavljevic01@gmail.com", "hzsm gmhy tqyp cikp")
 
 	// Send the email
 	if err := d.DialAndSend(m); err != nil {

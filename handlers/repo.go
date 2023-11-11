@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"math/rand"
 	"os"
 	"time"
-
-	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
-	"gopkg.in/gomail.v2"
-
 	// NoSQL: module containing Mongo api client
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -110,7 +108,12 @@ func (pr *AuthRepo) Create(auth *protos.AuthResponse) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	authCollection := pr.getCollection()
-
+	bytes, err := bcrypt.GenerateFromPassword([]byte(auth.GetPassword()), 14)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+	auth.Password = string(bytes)
 	result, err := authCollection.InsertOne(ctx, &auth)
 	if err != nil {
 		pr.logger.Println(err)
@@ -157,12 +160,16 @@ func (pr *AuthRepo) Login(email, password string) (bool, string, error) {
 
 	var auth protos.AuthResponse
 
-	err := authCollection.FindOne(ctx, bson.M{"email": email, "password": password}).Decode(&auth)
+	err := authCollection.FindOne(ctx, bson.M{"email": email}).Decode(&auth)
 	if err != nil {
 		pr.logger.Println(err)
 		return false, "", err
 	}
-
+	err = bcrypt.CompareHashAndPassword([]byte(auth.GetPassword()), []byte(password))
+	if err != nil {
+		pr.logger.Println(err)
+		return false, "", err
+	}
 	if auth.Email == "" || !auth.Activated {
 		return false, "", nil
 	}

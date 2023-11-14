@@ -244,3 +244,61 @@ func RandomString(length int) string {
 	}
 	return string(b)
 }
+
+func (pr *AuthRepo) GetByEmail(email string) (*protos.AuthResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"email": email}).Decode(&auth)
+	if err != nil {
+		pr.logger.Println(err)
+		return nil, err
+	}
+
+	return &auth, nil
+}
+
+func (pr *AuthRepo) ChangePasswordByEmail(email, currentPassword, newPassword string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"email": email}).Decode(&auth)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(auth.GetPassword()), []byte(currentPassword))
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	bytes, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+	auth.Password = string(bytes)
+
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"password": auth.GetPassword()}}
+	result, err := authCollection.UpdateOne(ctx, filter, update)
+	pr.logger.Printf("Documents matched: %v\n", result.MatchedCount)
+	pr.logger.Printf("Documents updated: %v\n", result.ModifiedCount)
+
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	return nil
+}

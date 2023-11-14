@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
@@ -71,4 +72,35 @@ func (s myAuthServer) Activate(ctx context.Context, in *protos.ActivateRequest) 
 		return nil, err
 	}
 	return out, nil
+}
+
+func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePasswordRequest) (*protos.AuthEmpty, error) {
+
+	currentAuth, err := s.repo.GetByEmail(in.GetEmail())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	// Check if the provided current password matches the stored password
+	if err := bcrypt.CompareHashAndPassword([]byte(currentAuth.GetPassword()), []byte(in.GetCurrentPassword())); err != nil {
+		s.logger.Println(err)
+		return nil, errors.New("current password is incorrect")
+	}
+
+	// Generate and set the new password
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(in.GetNewPassword()), 14)
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+	currentAuth.Password = string(newPasswordHash)
+
+	// Update the user in the repository
+	if err := s.repo.Update(currentAuth); err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	return new(protos.AuthEmpty), nil
 }

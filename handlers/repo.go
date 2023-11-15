@@ -6,6 +6,7 @@ import (
 	"fmt"
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 	"log"
 	"math/rand"
 	"os"

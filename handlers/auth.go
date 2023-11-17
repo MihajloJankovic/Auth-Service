@@ -74,7 +74,7 @@ func (s myAuthServer) Activate(ctx context.Context, in *protos.ActivateRequest) 
 	return out, nil
 }
 
-func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePasswordRequest) (*protos.Empty, error) {
+func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePasswordRequest) (*protos.AuthEmpty, error) {
 
 	currentAuth, err := s.repo.GetByEmail(in.GetEmail())
 	if err != nil {
@@ -101,5 +101,5 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 		return nil, err
 	}
 
-	return new(protos.Empty), nil
+	return new(protos.AuthEmpty), nil
 }

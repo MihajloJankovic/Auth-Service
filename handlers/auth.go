@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
 )
@@ -22,6 +25,11 @@ func NewServer(l *log.Logger, r *AuthRepo) *myAuthServer {
 }
 
 func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
+
+	if isPasswordInBlacklist(in.GetPassword()) {
+		return nil, errors.New("Please try another password!")
+	}
+
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
 	out.Password = in.GetPassword()
@@ -82,6 +90,10 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 		return nil, err
 	}
 
+	if isPasswordInBlacklist(in.GetNewPassword()) {
+		return nil, errors.New("New password blacklisted!")
+	}
+
 	// Check if the provided current password matches the stored password
 	if err := bcrypt.CompareHashAndPassword([]byte(currentAuth.GetPassword()), []byte(in.GetCurrentPassword())); err != nil {
 		s.logger.Println(err)
@@ -102,4 +114,31 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 	}
 
 	return new(protos.Empty), nil
+}
+
+func isPasswordInBlacklist(password string) bool {
+	blacklistFile, err := os.Open("password-blacklist.txt")
+	if err != nil {
+
+		log.Println("Warning: Unable to open password blacklist file")
+		return false
+	}
+	defer blacklistFile.Close()
+
+	blacklistData, err := ioutil.ReadAll(blacklistFile)
+	if err != nil {
+
+		log.Println("Warning: Unable to read password blacklist file")
+		return false
+	}
+
+	blacklistLines := strings.Split(string(blacklistData), "\n")
+
+	for _, line := range blacklistLines {
+		if strings.TrimSpace(line) == password {
+			return true
+		}
+	}
+
+	return false
 }

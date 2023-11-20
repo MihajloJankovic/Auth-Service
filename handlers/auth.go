@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"strings"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
 )
@@ -21,7 +22,21 @@ func NewServer(l *log.Logger, r *AuthRepo) *myAuthServer {
 	return &myAuthServer{*new(protos.UnimplementedAuthServer), l, r}
 }
 
+// isValidEmailFormat checks if the given email is in a valid format.
+func isValidEmailFormat(email string) bool {
+	// Perform a simple check for '@' and '.com'
+	return strings.Contains(email, "@") && strings.HasSuffix(email, ".com")
+}
 func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
+
+	// Validate email and password here
+	if in.GetEmail() == "" || in.GetPassword() == "" {
+		return nil, errors.New("Invalid input. Email and password are required.")
+	}
+	// Check if it's a valid email format
+	if !isValidEmailFormat(in.GetEmail()) {
+		return nil, errors.New("Invalid email format.")
+	}
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
 	out.Password = in.GetPassword()
@@ -45,6 +60,10 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 }
 
 func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*protos.AuthGet, error) {
+	// Validate email and password here
+	if in.GetEmail() == "" || in.GetPassword() == "" {
+		return nil, errors.New("Invalid input. Email and password are required.")
+	}
 	success, email, err := s.repo.Login(in.GetEmail(), in.GetPassword())
 	if err != nil {
 		s.logger.Println(err)
@@ -75,6 +94,10 @@ func (s myAuthServer) Activate(ctx context.Context, in *protos.ActivateRequest) 
 }
 
 func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePasswordRequest) (*protos.AuthEmpty, error) {
+	// Validate email, currentPassword, and newPassword here
+	if in.GetEmail() == "" || in.GetCurrentPassword() == "" || in.GetNewPassword() == "" {
+		return nil, errors.New("Invalid input. Email, current password, and new password are required.")
+	}
 
 	currentAuth, err := s.repo.GetByEmail(in.GetEmail())
 	if err != nil {

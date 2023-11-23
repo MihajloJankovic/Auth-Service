@@ -10,7 +10,7 @@ WORKDIR /app
 # Copy go mod and sum files
 COPY go.mod ./
 
-COPY password-blacklist.txt ./handlers
+COPY handlers/password-blacklist.txt ./handlers/
 
 
 # Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed

@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"os"
 
@@ -42,9 +43,9 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 		return nil, errors.New("Invalid email format.")
 	}
 
-	if isPasswordInBlacklist(in.GetPassword()) {
-		return nil, errors.New("Please try another password!")
-	}
+	// if isPasswordInBlacklist(in.GetPassword()) {
+	// 	return nil, errors.New("Please try another password!")
+	// }
 
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()

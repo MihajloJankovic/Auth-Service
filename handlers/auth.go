@@ -143,16 +143,14 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 func isPasswordInBlacklist(password string) bool {
 	blacklistFile, err := os.Open("password-blacklist.txt")
 	if err != nil {
-
-		log.Println(err, "Warning: Unable to open password blacklist file")
+		log.Println("Error opening blacklist file:", err)
 		return true
 	}
 	defer blacklistFile.Close()
 
 	blacklistData, err := ioutil.ReadAll(blacklistFile)
 	if err != nil {
-
-		log.Println(err, "Warning: Unable to read password blacklist file")
+		log.Println("Error reading blacklist file:", err)
 		return true
 	}
 

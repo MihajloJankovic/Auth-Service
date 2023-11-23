@@ -33,7 +33,6 @@ func isValidEmailFormat(email string) bool {
 }
 func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
 
-
 	// Validate email and password here
 	if in.GetEmail() == "" || in.GetPassword() == "" {
 		return nil, errors.New("Invalid input. Email and password are required.")
@@ -145,25 +144,25 @@ func isPasswordInBlacklist(password string) bool {
 	blacklistFile, err := os.Open("password-blacklist.txt")
 	if err != nil {
 
-		log.Println("Warning: Unable to open password blacklist file")
-		return false
+		log.Println(err, "Warning: Unable to open password blacklist file")
+		return true
 	}
 	defer blacklistFile.Close()
 
 	blacklistData, err := ioutil.ReadAll(blacklistFile)
 	if err != nil {
 
-		log.Println("Warning: Unable to read password blacklist file")
-		return false
+		log.Println(err, "Warning: Unable to read password blacklist file")
+		return true
 	}
 
 	blacklistLines := strings.Split(string(blacklistData), "\n")
 
 	for _, line := range blacklistLines {
 		if strings.TrimSpace(line) == password {
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }

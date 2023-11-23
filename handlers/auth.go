@@ -4,12 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
-
-	"golang.org/x/crypto/bcrypt"
-
-	"os"
 
 	"strings"
 
@@ -43,9 +40,9 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 		return nil, errors.New("Invalid email format.")
 	}
 
-	// if isPasswordInBlacklist(in.GetPassword()) {
-	// 	return nil, errors.New("Please try another password!")
-	// }
+	if isPasswordInBlacklist(in.GetPassword()) {
+		return nil, errors.New("Password on blacklist!")
+	}
 
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
@@ -142,14 +139,8 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 }
 
 func isPasswordInBlacklist(password string) bool {
-	blacklistFile, err := os.Open("password-blacklist.txt")
-	if err != nil {
-		log.Println("Error opening blacklist file:", err)
-		return true
-	}
-	defer blacklistFile.Close()
 
-	blacklistData, err := ioutil.ReadAll(blacklistFile)
+	blacklistData, err := ioutil.ReadFile("/root/password-blacklist.txt")
 	if err != nil {
 		log.Println("Error reading blacklist file:", err)
 		return true
@@ -159,9 +150,9 @@ func isPasswordInBlacklist(password string) bool {
 
 	for _, line := range blacklistLines {
 		if strings.TrimSpace(line) == password {
-			return false
+			return true
 		}
 	}
 
-	return true
+	return false
 }

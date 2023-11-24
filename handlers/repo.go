@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
-	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/gomail.v2"
 	"log"
 	"math/rand"
 	"os"
 	"time"
+
+	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
+	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
+
 	// NoSQL: module containing Mongo api client
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -131,10 +133,11 @@ func (pr *AuthRepo) Update(auth *protos.AuthResponse) error {
 
 	filter := bson.M{"email": auth.GetEmail()}
 	update := bson.M{"$set": bson.M{
-		"email":     auth.GetEmail(),
-		"password":  auth.GetPassword(),
-		"ticket":    auth.GetTicket(),
-		"activated": auth.GetActivated(),
+		"email":       auth.GetEmail(),
+		"password":    auth.GetPassword(),
+		"ticket":      auth.GetTicket(),
+		"ticketReset": auth.GetTicketReset(),
+		"activated":   auth.GetActivated(),
 	}}
 	result, err := authCollection.UpdateOne(ctx, filter, update)
 	pr.logger.Printf("Documents matched: %v\n", result.MatchedCount)
@@ -193,6 +196,7 @@ func (pr *AuthRepo) GetTicketByEmail(email string) (*protos.AuthResponse, error)
 
 	return &auth, nil
 }
+
 func (pr *AuthRepo) Activate(email, ticket string) (*protos.AuthResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -302,4 +306,62 @@ func (pr *AuthRepo) ChangePasswordByEmail(email, currentPassword, newPassword st
 	}
 
 	return nil
+}
+func sendResetLinkEmail(email, resetLink string) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", "goprojekat@gmail.com")
+	m.SetHeader("To", email)
+	m.SetHeader("Subject", "Password Reset Request")
+	m.SetBody("text/html", fmt.Sprintf("Click the following link to reset your password: <a href=\"%s\">Reset Password</a>", resetLink))
+
+	d := gomail.NewDialer("smtp.gmail.com", 587, "stefan.milosavljevic01@gmail.com", "hzsm gmhy tqyp cikp")
+
+	if err := d.DialAndSend(m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pr *AuthRepo) UpdateResetTicket(email, newTicketReset string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	filter := bson.M{"email": email}
+	update := bson.M{
+		"$set": bson.M{
+			"ticketReset": newTicketReset,
+		},
+	}
+
+	result, err := authCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	pr.logger.Printf("Reset ticket updated for email %s. Documents matched: %v, Documents updated: %v\n", email, result.MatchedCount, result.ModifiedCount)
+
+	return nil
+}
+
+func (pr *AuthRepo) ValidateResetTicket(email, resetTicket string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	var auth protos.AuthResponse
+
+	err := authCollection.FindOne(ctx, bson.M{"email": email, "ticketReset": resetTicket}).Decode(&auth)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, nil
+		}
+		pr.logger.Println(err)
+		return false, err
+	}
+	return true, nil
 }

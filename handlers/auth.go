@@ -46,11 +46,21 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
-	out.Password = in.GetPassword()
+	out.Password = in.GetPassword() // Plain text password from the request
 	out.Ticket = RandomString(18)
 	out.Activated = false
+	out.TicketReset = RandomString(24)
 
-	err := s.repo.Create(out)
+	// Hash the password before storing it in the database
+	bytes, err := bcrypt.GenerateFromPassword([]byte(out.GetPassword()), 14)
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+	out.Password = string(bytes)
+
+	// Store the user details in the database
+	err = s.repo.Create(out)
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err
@@ -136,6 +146,55 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 	}
 
 	return new(protos.AuthEmpty), nil
+}
+
+func (s myAuthServer) RequestPasswordReset(ctx context.Context, in *protos.AuthGet) (*protos.AuthEmpty, error) {
+	if in.GetEmail() == "" {
+		return nil, errors.New("Invalid input. Email is required.")
+	}
+
+	// Generate a new random string for ticketReset and store it in the database
+	newTicketReset := RandomString(24)
+	if err := s.repo.UpdateResetTicket(in.GetEmail(), newTicketReset); err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	// Send the reset link to the user via email
+	resetLink := fmt.Sprintf("http://localhost:9090/reset/%s/%s", in.GetEmail(), newTicketReset)
+
+	if err := sendResetLinkEmail(in.GetEmail(), resetLink); err != nil {
+		s.logger.Println("Failed to send reset email:", err)
+		// You can choose to return an error or handle it as appropriate for your application
+	}
+
+	return new(protos.AuthEmpty), nil
+}
+
+func (s myAuthServer) ResetPassword(ctx context.Context, in *protos.ResetRequest) (*protos.AuthGet, error) {
+	// Validate email and reset ticket
+	if in.GetEmail() == "" || in.GetTicketReset() == "" {
+		return nil, errors.New("Invalid input. Email and reset ticket are required.")
+	}
+
+	// Check if the provided reset ticket is valid
+	isValid, err := s.repo.ValidateResetTicket(in.GetEmail(), in.GetTicketReset())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	if !isValid {
+		return nil, errors.New("Invalid or expired reset ticket.")
+	}
+
+	// Use the provided new password and update it in the database
+	if err := s.repo.ChangePasswordByEmail(in.GetEmail(), in.GetNewPassword()); err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	return &protos.AuthGet{Email: in.GetEmail()}, nil
 }
 
 func isPasswordInBlacklist(password string) bool {

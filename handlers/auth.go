@@ -192,7 +192,7 @@ func (s myAuthServer) ResetPassword(ctx context.Context, in *protos.ResetRequest
 	}
 
 	// Use the provided new password and update it in the database
-	if err := s.repo.ChangePasswordByEmail(in.GetEmail(), in.GetNewPassword()); err != nil {
+	if err := s.repo.ResetPasswordByEmail(in.GetEmail(), in.GetNewPassword()); err != nil {
 		s.logger.Println(err)
 		return nil, err
 	}

@@ -365,3 +365,29 @@ func (pr *AuthRepo) ValidateResetTicket(email, resetTicket string) (bool, error)
 	}
 	return true, nil
 }
+
+func (pr *AuthRepo) ResetPasswordByEmail(email, newPassword string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	bytes, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"password": string(bytes)}}
+	result, err := authCollection.UpdateOne(ctx, filter, update)
+	pr.logger.Printf("Documents matched: %v\n", result.MatchedCount)
+	pr.logger.Printf("Documents updated: %v\n", result.ModifiedCount)
+
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	return nil
+}

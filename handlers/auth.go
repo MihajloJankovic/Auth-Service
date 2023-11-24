@@ -49,21 +49,11 @@ func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*pr
 
 	out := new(protos.AuthResponse)
 	out.Email = in.GetEmail()
-	out.Password = in.GetPassword() // Plain text password from the request
+	out.Password = in.GetPassword()
 	out.Ticket = RandomString(18)
 	out.Activated = false
 	out.TicketReset = RandomString(24)
-
-	// Hash the password before storing it in the database
-	bytes, err := bcrypt.GenerateFromPassword([]byte(out.GetPassword()), 14)
-	if err != nil {
-		s.logger.Println(err)
-		return nil, err
-	}
-	out.Password = string(bytes)
-
-	// Store the user details in the database
-	err = s.repo.Create(out)
+	err := s.repo.Create(out)
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err

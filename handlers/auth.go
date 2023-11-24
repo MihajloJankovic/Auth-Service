@@ -191,15 +191,8 @@ func (s myAuthServer) ResetPassword(ctx context.Context, in *protos.ResetRequest
 		return nil, errors.New("Invalid or expired reset ticket.")
 	}
 
-	// Generate a new password and update it in the database
-	newPassword := RandomString(12) // You might want to generate a secure random password
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
-	if err != nil {
-		s.logger.Println(err)
-		return nil, err
-	}
-
-	if err := s.repo.ChangePasswordByEmail(in.GetEmail(), string(newPasswordHash)); err != nil {
+	// Use the provided new password and update it in the database
+	if err := s.repo.ChangePasswordByEmail(in.GetEmail(), in.GetNewPassword()); err != nil {
 		s.logger.Println(err)
 		return nil, err
 	}

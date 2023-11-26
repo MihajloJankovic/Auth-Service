@@ -26,6 +26,7 @@ const (
 	Auth_ChangePassword_FullMethodName       = "/auth/ChangePassword"
 	Auth_RequestPasswordReset_FullMethodName = "/auth/RequestPasswordReset"
 	Auth_ResetPassword_FullMethodName        = "/auth/ResetPassword"
+	Auth_Delete_FullMethodName               = "/auth/Delete"
 )
 
 // AuthClient is the client API for Auth service.
@@ -39,6 +40,7 @@ type AuthClient interface {
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*AuthEmpty, error)
 	RequestPasswordReset(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthEmpty, error)
 	ResetPassword(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*AuthGet, error)
+	Delete(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthEmpty, error)
 }
 
 type authClient struct {
@@ -112,6 +114,15 @@ func (c *authClient) ResetPassword(ctx context.Context, in *ResetRequest, opts .
 	return out, nil
 }
 
+func (c *authClient) Delete(ctx context.Context, in *AuthGet, opts ...grpc.CallOption) (*AuthEmpty, error) {
+	out := new(AuthEmpty)
+	err := c.cc.Invoke(ctx, Auth_Delete_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
@@ -123,6 +134,7 @@ type AuthServer interface {
 	ChangePassword(context.Context, *ChangePasswordRequest) (*AuthEmpty, error)
 	RequestPasswordReset(context.Context, *AuthGet) (*AuthEmpty, error)
 	ResetPassword(context.Context, *ResetRequest) (*AuthGet, error)
+	Delete(context.Context, *AuthGet) (*AuthEmpty, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -150,6 +162,9 @@ func (UnimplementedAuthServer) RequestPasswordReset(context.Context, *AuthGet) (
 }
 func (UnimplementedAuthServer) ResetPassword(context.Context, *ResetRequest) (*AuthGet, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServer) Delete(context.Context, *AuthGet) (*AuthEmpty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -290,6 +305,24 @@ func _Auth_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthGet)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).Delete(ctx, req.(*AuthGet))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -324,6 +357,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResetPassword",
 			Handler:    _Auth_ResetPassword_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Auth_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

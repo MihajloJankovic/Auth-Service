@@ -149,6 +149,24 @@ func (pr *AuthRepo) Update(auth *protos.AuthResponse) error {
 	}
 	return nil
 }
+func (pr *AuthRepo) DeleteByEmail(email string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	authCollection := pr.getCollection()
+
+	filter := bson.M{"email": email}
+
+	result, err := authCollection.DeleteOne(ctx, filter)
+	if err != nil {
+		pr.logger.Println(err)
+		return err
+	}
+
+	pr.logger.Printf("Document deleted for email %s. Documents deleted: %v\n", email, result.DeletedCount)
+
+	return nil
+}
 
 func (pr *AuthRepo) getCollection() *mongo.Collection {
 	authDatabase := pr.cli.Database("mongoAuth")

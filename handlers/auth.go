@@ -90,6 +90,21 @@ func (s myAuthServer) GetTicket(ctx context.Context, in *protos.AuthGet) (*proto
 	}
 	return &protos.AuthTicket{Ticket: out.Ticket}, nil
 }
+func (s myAuthServer) Delete(ctx context.Context, in *protos.AuthGet) (*protos.AuthEmpty, error) {
+	// Validate email
+	if in.GetEmail() == "" {
+		return nil, errors.New("Invalid input. Email is required.")
+	}
+
+	// Perform the delete operation
+	err := s.repo.DeleteByEmail(in.GetEmail())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	return new(protos.AuthEmpty), nil
+}
 
 func (s myAuthServer) Activate(ctx context.Context, in *protos.ActivateRequest) (*protos.AuthResponse, error) {
 	out, err := s.repo.Activate(in.GetEmail(), in.GetTicket())

@@ -180,7 +180,7 @@ func (s myAuthServer) RequestPasswordReset(ctx context.Context, in *protos.AuthG
 	}
 
 	// Send the reset link to the user via email
-	resetLink := fmt.Sprintf("http://localhost:9090/reset/%s/%s", in.GetEmail(), newTicketReset)
+	resetLink := fmt.Sprintf("http://localhost:4200/reset/%s/%s", in.GetEmail(), newTicketReset)
 
 	if err := sendResetLinkEmail(in.GetEmail(), resetLink); err != nil {
 		s.logger.Println("Failed to send reset email:", err)

@@ -29,24 +29,33 @@ func isValidEmailFormat(email string) bool {
 	// Perform a simple check for '@' and '.com'
 	return strings.Contains(email, "@") && strings.HasSuffix(email, ".com")
 }
-func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
 
+// trimSpace trims leading and trailing whitespaces from a string.
+func trimSpace(s string) string {
+	return strings.TrimSpace(s)
+}
+func (s myAuthServer) Register(ctx context.Context, in *protos.AuthRequest) (*protos.AuthEmpty, error) {
 	// Validate email and password here
 	if in.GetEmail() == "" || in.GetPassword() == "" {
 		return nil, errors.New("Invalid input. Email and password are required.")
 	}
+
+	// Trim leading and trailing whitespaces from email and password
+	email := trimSpace(in.GetEmail())
+	password := trimSpace(in.GetPassword())
+
 	// Check if it's a valid email format
-	if !isValidEmailFormat(in.GetEmail()) {
+	if !isValidEmailFormat(email) {
 		return nil, errors.New("Invalid email format.")
 	}
 
-	if isPasswordInBlacklist(in.GetPassword()) {
+	if isPasswordInBlacklist(password) {
 		return nil, errors.New("Password on blacklist!")
 	}
 
 	out := new(protos.AuthResponse)
-	out.Email = in.GetEmail()
-	out.Password = in.GetPassword()
+	out.Email = email
+	out.Password = password
 	out.Ticket = RandomString(18)
 	out.Activated = false
 	out.TicketReset = RandomString(24)
@@ -71,7 +80,12 @@ func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*proto
 	if in.GetEmail() == "" || in.GetPassword() == "" {
 		return nil, errors.New("Invalid input. Email and password are required.")
 	}
-	success, email, err := s.repo.Login(in.GetEmail(), in.GetPassword())
+
+	// Trim leading and trailing whitespaces from email and password
+	email := trimSpace(in.GetEmail())
+	password := trimSpace(in.GetPassword())
+
+	success, userEmail, err := s.repo.Login(email, password)
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err
@@ -79,7 +93,7 @@ func (s myAuthServer) Login(ctx context.Context, in *protos.AuthRequest) (*proto
 	if !success {
 		return nil, errors.New("login failed")
 	}
-	return &protos.AuthGet{Email: email}, nil
+	return &protos.AuthGet{Email: userEmail}, nil
 }
 
 func (s myAuthServer) GetTicket(ctx context.Context, in *protos.AuthGet) (*protos.AuthTicket, error) {

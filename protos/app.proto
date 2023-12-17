@@ -10,7 +10,8 @@ service auth {
   rpc ChangePassword(ChangePasswordRequest) returns (AuthEmpty);
   rpc RequestPasswordReset(AuthGet) returns (AuthEmpty);
   rpc ResetPassword(ResetRequest) returns (AuthGet);
-  rpc Delete(AuthGet) returns (AuthEmpty);
+  rpc DeleteGuest(AuthGet) returns (AuthEmpty);
+  rpc DeleteHost(AuthGet) returns (AuthEmpty);
 }
 
 message AuthGet {

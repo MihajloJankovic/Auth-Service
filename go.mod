@@ -1,16 +1,21 @@
 module github.com/MihajloJankovic/Auth-Service
 
-go 1.20
+go 1.21.3
+
+toolchain go1.21.5
 
 require (
-	go.mongodb.org/mongo-driver v1.12.1
+	github.com/MihajloJankovic/Aviability-Service v0.0.0-20231214113444-2de8ef32463c
+	github.com/MihajloJankovic/accommodation-service v0.0.0-20231127104105-82a282b76644
+	github.com/MihajloJankovic/profile-service v0.0.0-20231127105818-e26938dd95a8
+	github.com/MihajloJankovic/reservation-service v0.0.0-20231215202508-033891a4d902
+	go.mongodb.org/mongo-driver v1.13.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
@@ -20,13 +25,13 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
 
 require (
-	golang.org/x/crypto v0.14.0
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.15.0
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )

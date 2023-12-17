@@ -7,21 +7,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"strings"
 
 	protos "github.com/MihajloJankovic/Auth-Service/protos/main"
+	protosava "github.com/MihajloJankovic/Aviability-Service/protos/main"
+	protosAcc "github.com/MihajloJankovic/accommodation-service/protos/main"
+	protosprof "github.com/MihajloJankovic/profile-service/protos/main"
+	protosRes "github.com/MihajloJankovic/reservation-service/protos/genfiles"
 )
 
 type myAuthServer struct {
 	protos.UnimplementedAuthServer
 	logger *log.Logger
 	// NoSQL: injecting product repository
-	repo *AuthRepo
+	repo    *AuthRepo
+	acc     protosAcc.AccommodationClient
+	profile protosprof.ProfileClient
+	avai    protosava.AccommodationAviabilityClient
+	resh    protosRes.ReservationClient
 }
 
-func NewServer(l *log.Logger, r *AuthRepo) *myAuthServer {
-	return &myAuthServer{*new(protos.UnimplementedAuthServer), l, r}
+func NewServer(l *log.Logger, r *AuthRepo, acc protosAcc.AccommodationClient, profile protosprof.ProfileClient, avai protosava.AccommodationAviabilityClient, resh protosRes.ReservationClient) *myAuthServer {
+	return &myAuthServer{*new(protos.UnimplementedAuthServer), l, r, acc, profile, avai, resh}
 }
 
 // isValidEmailFormat checks if the given email is in a valid format.
@@ -104,14 +113,62 @@ func (s myAuthServer) GetTicket(ctx context.Context, in *protos.AuthGet) (*proto
 	}
 	return &protos.AuthTicket{Ticket: out.Ticket}, nil
 }
-func (s myAuthServer) Delete(ctx context.Context, in *protos.AuthGet) (*protos.AuthEmpty, error) {
+func (s myAuthServer) DeleteHost(ctx context.Context, in *protos.AuthGet) (*protos.AuthEmpty, error) {
+
 	// Validate email
 	if in.GetEmail() == "" {
 		return nil, errors.New("Invalid input. Email is required.")
 	}
 
+	out_1 := new(protosAcc.AccommodationRequest)
+	out_1.Email = in.GetEmail()
+	accommodations, err := s.acc.GetAccommodation(ctx, out_1)
+	for _, acc := range accommodations.Dummy {
+
+		temp := new(protosRes.DateFromDateTo)
+		temp.DateFrom = getTodaysDateInLocal()
+		temp.DateTo = getTodaysDateInLocal()
+		temp.Accid = acc.GetUid()
+		_, err := s.resh.CheckActiveReservation(context.Background(), temp)
+		if err != nil {
+			log.Println("Couldn't delete reservation because it's active")
+			return nil, err
+		}
+	}
+	for _, acc := range accommodations.Dummy {
+		req := new(protosRes.DeleteRequestaa)
+		req.Uid = acc.GetUid()
+		_, err := s.resh.DeleteByAccomnendation(context.Background(), req)
+		if err != nil {
+			log.Printf("RPC failed: %v\n", err)
+			return nil, err
+		}
+		req1 := new(protosava.DeleteRequestb)
+		req1.Uid = acc.GetUid()
+		//this is deleted by accomndation uid
+		_, err = s.avai.DeleteByUser(context.Background(), req1)
+		if err != nil {
+			log.Printf("RPC failed: %v\n", err)
+			return nil, err
+		}
+	}
+	for _, acc := range accommodations.Dummy {
+		req := &protosAcc.DeleteRequest{Uid: acc.GetUid()}
+
+		_, err := s.acc.DeleteAccommodation(context.Background(), req)
+		if err != nil {
+			log.Printf("RPC failed: %v\n", err)
+			return nil, err
+		}
+	}
+	_, err = s.profile.DeleteProfile(context.Background(), &protosprof.ProfileRequest{Email: in.GetEmail()})
+	if err != nil {
+		log.Printf("RPC failed: %v\n", err)
+		return nil, err
+	}
+
 	// Perform the delete operation
-	err := s.repo.DeleteByEmail(in.GetEmail())
+	err = s.repo.DeleteByEmail(in.GetEmail())
 	if err != nil {
 		s.logger.Println(err)
 		return nil, err
@@ -119,7 +176,44 @@ func (s myAuthServer) Delete(ctx context.Context, in *protos.AuthGet) (*protos.A
 
 	return new(protos.AuthEmpty), nil
 }
+func (s myAuthServer) DeleteGuest(ctx context.Context, in *protos.AuthGet) (*protos.AuthEmpty, error) {
 
+	// Validate email
+	if in.GetEmail() == "" {
+		return nil, errors.New("Invalid input. Email is required.")
+	}
+
+	temp := new(protosRes.Emaill)
+	temp.Email = in.GetEmail()
+	_, err := s.resh.CheckActiveReservationByEmail(context.Background(), temp)
+	if err != nil {
+		log.Println("Couldn't delete reservation because it's active")
+		return nil, err
+	}
+
+	temp1 := new(protosRes.Emaill)
+	temp1.Email = in.GetEmail()
+	_, err = s.resh.DeleteReservationByEmail(context.Background(), temp1)
+	if err != nil {
+		log.Println("Couldn't delete reservation because it's active")
+		return nil, err
+	}
+
+	_, err = s.profile.DeleteProfile(context.Background(), &protosprof.ProfileRequest{Email: in.GetEmail()})
+	if err != nil {
+		log.Printf("RPC failed: %v\n", err)
+		return nil, err
+	}
+
+	// Perform the delete operation
+	err = s.repo.DeleteByEmail(in.GetEmail())
+	if err != nil {
+		s.logger.Println(err)
+		return nil, err
+	}
+
+	return new(protos.AuthEmpty), nil
+}
 func (s myAuthServer) Activate(ctx context.Context, in *protos.ActivateRequest) (*protos.AuthResponse, error) {
 	out, err := s.repo.Activate(in.GetEmail(), in.GetTicket())
 	if err != nil {
@@ -233,4 +327,13 @@ func isPasswordInBlacklist(password string) bool {
 	}
 
 	return false
+}
+func getTodaysDateInLocal() string {
+	// Get the current time in the local timezone
+	currentTime := time.Now().Local()
+
+	// Format the date as yyyy-mm-dd
+	formattedDate := currentTime.Format("2006-01-02")
+
+	return formattedDate
 }

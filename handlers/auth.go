@@ -310,23 +310,31 @@ func (s myAuthServer) ResetPassword(ctx context.Context, in *protos.ResetRequest
 	return &protos.AuthGet{Email: in.GetEmail()}, nil
 }
 
-func isPasswordInBlacklist(password string) bool {
+var passwordBlacklist map[string]struct{}
 
+func init() {
+	// Initialize the password blacklist set
+	loadPasswordBlacklist()
+}
+
+func loadPasswordBlacklist() {
 	blacklistData, err := ioutil.ReadFile("/root/password-blacklist.txt")
 	if err != nil {
 		log.Println("Error reading blacklist file:", err)
-		return true
+		return
 	}
 
+	passwordBlacklist = make(map[string]struct{})
 	blacklistLines := strings.Split(string(blacklistData), "\n")
 
 	for _, line := range blacklistLines {
-		if strings.TrimSpace(line) == password {
-			return true
-		}
+		passwordBlacklist[strings.TrimSpace(line)] = struct{}{}
 	}
+}
 
-	return false
+func isPasswordInBlacklist(password string) bool {
+	_, exists := passwordBlacklist[password]
+	return exists
 }
 func getTodaysDateInLocal() string {
 	// Get the current time in the local timezone

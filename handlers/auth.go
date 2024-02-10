@@ -185,15 +185,10 @@ func (s myAuthServer) DeleteGuest(ctx context.Context, in *protos.AuthGet) (*pro
 
 	temp := new(protosRes.Emaill)
 	temp.Email = in.GetEmail()
-	_, err := s.resh.CheckActiveReservationByEmail(context.Background(), temp)
-	if err != nil {
-		log.Println("Couldn't delete reservation because it's active")
-		return nil, err
-	}
 
 	temp1 := new(protosRes.Emaill)
 	temp1.Email = in.GetEmail()
-	_, err = s.resh.DeleteReservationByEmail(context.Background(), temp1)
+	_, err := s.resh.DeleteReservationByEmail(context.Background(), temp1)
 	if err != nil {
 		log.Println("Couldn't delete reservation because it's active")
 		return nil, err
@@ -230,10 +225,6 @@ func (s myAuthServer) ChangePassword(ctx context.Context, in *protos.ChangePassw
 	}
 
 	currentAuth, err := s.repo.GetByEmail(in.GetEmail())
-	if err != nil {
-		s.logger.Println(err)
-		return nil, err
-	}
 
 	if isPasswordInBlacklist(in.GetNewPassword()) {
 		return nil, errors.New("New password blacklisted!")
